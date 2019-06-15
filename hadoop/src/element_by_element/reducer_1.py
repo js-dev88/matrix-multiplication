@@ -22,11 +22,11 @@ for line in sys.stdin:
             print('{}\t{}\t{}'.format(current_res_line, current_res_col, sum))
         else:
             first_line = False
-        sum = value
+        sum = 0
         current_res_line = res_line
         current_res_col = res_col
 
-    if current_res_line == res_line or current_res_col == res_col:
+    if current_res_line == res_line and current_res_col == res_col:
         sum += value
 
 print('{}\t{}\t{}'.format(current_res_line, current_res_col, sum))
