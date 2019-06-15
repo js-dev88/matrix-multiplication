@@ -3,12 +3,14 @@ import sys
 
 # lecture STDIN
 for line in sys.stdin:
+    # remove leading and trailing whitespace
+    line = line.strip()
+    
+    # split key , value
     elements = line.split('\t')
-    mat_line = elements[0]
-    values = elements[1].split(',')
-    col = values[0]
-    if len(values) > 0:
-        multiplication = int(values[1]) * int(values[2].rstrip())
-        print('{},{}\t{}'.format(mat_line, col, multiplication))
+    tuple_L = eval(elements[0])
+    tuple_R = eval(elements[1])
+    
+    print('{},{}\t{}'.format(int(tuple_L[1]), int(tuple_R[1]), int(tuple_L[2]) * int(tuple_R[2])))
 
     
