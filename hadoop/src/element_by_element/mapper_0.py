@@ -18,7 +18,7 @@ for line in sys.stdin:
         print('{}\t{},{},{}'.format(element[0], element[1], element[2].rstrip(), 'R'))
 
     
-hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-3.1.2.jar \
+"""hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-3.1.2.jar \
 -input input/L_matrix_a_3_3.txt -input input/R_matrix_b_3_3.txt \
 -output output/ \
 -file src/mapper_0.py -mapper src/mapper_0.py \
@@ -28,4 +28,4 @@ hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-3.1.2.jar \
 -input output/part* \
 -output output2/ \
 -file src/mapper_1.py -mapper src/mapper_1.py \
--file src/reducer_1.py -reducer src/reducer_1.py 
+-file src/reducer_1.py -reducer src/reducer_1.py """
