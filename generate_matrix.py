@@ -7,11 +7,11 @@ import os
 import shutil
 
 
-def main(sc, name, nb_lines, nb_columns, keep):
+def main(sc, side, name, nb_lines, nb_columns, keep):
     print(f'les arguments suivants ont été passés : nb_lines = {nb_lines}, nb_col={nb_columns}')
     # Évaluation du temps de création des matrices
     startTime = time.time()
-    generate_matrix(sc, name, nb_lines, nb_columns)
+    generate_matrix(sc, side, name, nb_lines, nb_columns)
     endTime = time.time()
     print('Temps total d\'exécution des scripts de création : ', str(int(endTime - startTime)) + 's')
     # sert uniquement pour garder spark web UI en local
@@ -19,7 +19,7 @@ def main(sc, name, nb_lines, nb_columns, keep):
         keep_web_ui_alive()
 
 
-def generate_matrix(sc, name, nb_lines, nb_columns):
+def generate_matrix(sc, side, name, nb_lines, nb_columns):
     # génération des occurences sous la forme (clé, valeur) => ((i, j), v)
     # v est une valeur entière entre 0 et 100
     matrix = sc.parallelize([((i,j),random.randint(0,101))  for i in range(1, nb_lines+1) for j in range(1, nb_columns+1)])
@@ -28,7 +28,7 @@ def generate_matrix(sc, name, nb_lines, nb_columns):
     # Mise sous format i j v des couples
     matrix = matrix.map(lambda row: str(row[0][0]) + '\t' + str(row[0][1]) + '\t' + str(row[1]))
     # Écriture dans le fichier
-    filePath = f'projet/matrix_{name}_{nb_lines}_{nb_columns}'
+    filePath = f'spark/input/{side}_matrix_{name}_{nb_lines}_{nb_columns}'
     message = 'Fichier non généré'
     write_and_replace_if_exist(filePath, matrix, message)
 
@@ -55,6 +55,7 @@ def keep_web_ui_alive():
 if __name__ == '__main__':
     # Définition et Récupération des arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--side', type=str, required=True, default="L", help="L for left matrix or R for right matrix")
     parser.add_argument('-n', '--name', type=str, required=True, default='no_name', help="name of the matrix")
     parser.add_argument('-l', '--nb_lines', type=int, required=True, default=10, help="number of lines of the matrix")
     parser.add_argument('-c', '--nb_col', type=int, required=True, default=10, help="number of columns of the matrix")
@@ -65,7 +66,7 @@ if __name__ == '__main__':
     sc = SparkContext()
 
     #exécution du main
-    main(sc, args.name, args.nb_lines, args.nb_col, args.keep)
+    main(sc, args.side, args.name, args.nb_lines, args.nb_col, args.keep)
     
     # Arrêt du spark context 
     sc.stop()
