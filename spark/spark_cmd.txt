@@ -1,0 +1,58 @@
+A = sc.textFile('projet/matrix_a_3_3')
+B = sc.textFile('projet/matrix_b_3_3')
+
+#Mise sous la forme (j, ( i, v)) 
+A = A.map(lambda x: x.split('\t'))  
+A = A.map(lambda x:(x[1], (x[1], x[2])))
+
+#Mise sous la forme (i, ( j, v)) 
+B = B.map(lambda x: x.split('\t'))  
+B = B.map(lambda x:(x[1], (x[0], x[2])))
+
+
+element by row 
+
+
+
+
+mul = A.join(B)
+
+#map pour avoir la forme ((index_column_A, index_ligne_A, valeur_A)(index_colonne_B, valeur)
+mul1 = mul.map(lambda x : ((x[0], x[1][0][0], x[1][0][1]), (x[1][1][0], x[1][1][1])))
+
+#regrouper les enregistrements par clé
+mul2 = mul1.groupByKey().map(lambda x : (x[0], list(x[1])))
+
+#on distribue la multiplication de lélement sur tous les élements de la lignes pour obtenir la forme 
+((resi, resj), value)
+mul3 = mul2.map(lambda x : [((x[0][1], y[0]), int(x[0][2]) * int(y[1])) for y in x[1]])
+
+#on aplatit la liste pour avoir des couples clé , valeur
+mul4 = mul3.flatMap(lambda x : [y for y in x])
+
+#enfin on somme sur tous les éléments ayant la même clé
+mul5 = mul4.reduceByKey(lambda x,y: x+y)
+
+#Tri des valeurs
+
+
+row by column
+
+A = sc.textFile('projet/matrix_a_3_3')
+B = sc.textFile('projet/matrix_b_3_3')
+
+#Mise sous la forme (i, ( j, v)) 
+A = A.map(lambda x: x.split('\t'))  
+A = A.map(lambda x:(x[0], (x[1], x[2])))
+A_line = A.groupByKey().map(lambda x : (x[0], list(x[1])))
+
+#Mise sous la forme (j, ( i, v)) 
+B = B.map(lambda x: x.split('\t'))  
+B = B.map(lambda x:(x[1], (x[0], x[2])))
+B_col = B.groupByKey().map(lambda x : (x[0], list(x[1])))
+
+cart = A_line.cartesian(B_col)
+
+mul = cart.map(lambda x: ((x[0][0], x[1][0]), [int(y[1]) * int(z[1]) for y in x[0][1] for z in x[1][1] if y[0] == z[0]]))
+
+
