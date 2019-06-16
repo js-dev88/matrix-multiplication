@@ -67,8 +67,42 @@ def multiply_matrix(sc, matrix_a, matrix_b, algo):
         mul = multiply_row_by_column(A, B)
     elif int(algo) == 2:
         mul = multiply_element_by_row(A, B)
+    elif int(algo) == 3:
+        mul = multiply_row_block_by_col_block(A, B)
     else:
         print('Algorithm introuvable')
+
+    return mul
+
+def multiply_row_block_by_col_block(A, B):
+
+    
+    A = sc.textFile('projet/matrix_a_3_3')
+    B = sc.textFile('projet/matrix_b_3_3')
+
+    #Mise sous la forme (i, ( j, v)) 
+    A = A.map(lambda x: x.split('\t'))  
+    A = A.map(lambda x:(x[0], (x[1], x[2])))
+    A_line = A.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+2] for i in range(0, len(list(x[1])), 2)])])
+
+
+    #Mise sous la forme (j, ( i, v)) 
+    B = B.map(lambda x: x.split('\t'))  
+    B = B.map(lambda x:(x[1], (x[0], x[2])))
+    B_col = B.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+2] for i in range(0, len(list(x[1])), 2)])])
+
+    mul = A_line.cartesian(B_col)
+    mul = mul.filter(lambda x: x[0][0][1] == x[1][0][1])
+    mul = mul.map(lambda x: ((x[0][0][0], x[1][0][0]), [int(y[1]) * int(z[1]) for y in x[0][1] for z in x[1][1] if y[0] == z[0]]))
+
+
+    #Sum des produits de la liste
+
+    mul = mul.reduceByKey(lambda x,y: x+y)
+
+    mul = mul.map(lambda x: (x[0], sum(x[1])))
+    #Tri des valeurs
+    mul = mul.sortByKey()
 
     return mul
 
