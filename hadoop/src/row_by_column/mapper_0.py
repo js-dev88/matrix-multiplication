@@ -7,7 +7,6 @@ filepath = os.environ["map_input_file"]
 filename = os.path.split(filepath)[-1]
 type_matrix = filename.split('_')[0]
 
-f = open("/root/bigdata/mapper_0.txt", "a")
 # lecture STDIN
 for line in sys.stdin:
     # remove leading and trailing whitespace

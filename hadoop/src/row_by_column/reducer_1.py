@@ -1,37 +1,22 @@
 #!/usr/bin/env python3
 import sys
 
-first_line = True
-sum_list = {}
-current_res_line = 0
-
-
 # lecture STDIN
 for line in sys.stdin:
     # remove leading and trailing whitespace
     line = line.strip()
     # split key , value
     element = line.split('\t')
-
-    res_line = int(element[0])
+    index = element[0].split(',')
+    res_line = index[0]
+    secondary_index = index[1]
     list_elem_by_line = eval(element[1])
+    sum = 0
+    for el in list_elem_by_line:
+        sum += int(el)
 
-    if current_res_line != res_line:
-        if not first_line:
-            for col_index, sum in sum_list.items():
-                print('{}\t{}\t{}'.format(current_res_line, col_index, sum))
-        else:
-            first_line = False                
-        sum_list = {}
-        current_res_line = res_line
+    print('{}\t{}\t{}'.format(res_line, secondary_index, sum))
+   
 
-    if current_res_line == res_line:
-        for el_res in list_elem_by_line:
-            try:
-                sum_list[el_res[0]] += el_res[1]
-            except KeyError:
-                sum_list[el_res[0]] = el_res[1]
+
         
-
-for col_index, sum in sum_list.items():
-    print('{}\t{}\t{}'.format(current_res_line, col_index, sum))

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import sys
 
-nb_blocks = 2
-
 def join(super_L, elements_R):
     for elem_L in super_L:
         for elem_R in super_R:
@@ -52,6 +50,8 @@ for line in sys.stdin:
             elements_L.append((index, second_index, value))
         else:
             elements_R.append((index, second_index, value))
+
+
 super_L.append(elements_L)
 super_R.append(elements_R)
 join(super_L, super_R)
