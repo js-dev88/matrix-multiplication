@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+chunk_length = 2
 
 def keep_matching_index(elem_L, elem_R):
     R_index = [x[1] for x in elem_R]
@@ -14,12 +15,20 @@ def keep_matching_index(elem_L, elem_R):
     
     return elem_L, elem_R
 
+def divide_in_chunks(chunk_length, elem_L, elem_R):
+    if len(elem_L) > 0 and len(elem_R) > 0:
+        elem_L_chunked = [elem_L[i:i+chunk_length] for i in range(0, len(elem_L), chunk_length)]
+        elem_R_chunked = [elem_R[i:i+chunk_length] for i in range(0, len(elem_R), chunk_length)]
+        for i, chunk_list_L in enumerate(elem_L_chunked):
+            print('{}\t{}'.format(chunk_list_L, elem_R_chunked[i]))
+
 def join(super_L, elements_R):
     for elem_L in super_L:
         for elem_R in super_R:
             if len(elem_L) > 0 and len(elem_R) > 0:
                 elem_L, elem_R = keep_matching_index(elem_L, elem_R)
-                print('{}\t{}'.format(elem_L, elem_R))
+                divide_in_chunks(chunk_length, elem_L, elem_R)
+                
  
 #on fabrique les lignes et colonnes
 current_index = 0
