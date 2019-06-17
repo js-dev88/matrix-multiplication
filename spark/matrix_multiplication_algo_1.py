@@ -7,16 +7,16 @@ import matrix_mult_display
 
 
 #Changer le chemin avant l'éxécution
-PATH = 'root/bigdata/spark-2.4.3-bin-hadoop2.7/bin/projet/'
-#PATH = 'home/jsa/bigdata/spark-2.4.1-bin-hadoop2.7/bin/projet/'
+#PATH = 'root/bigdata/spark-2.4.3-bin-hadoop2.7/bin/projet/'
+PATH = 'home/jsa/bigdata/spark-2.4.1-bin-hadoop2.7/bin/projet/'
 
-def main(sc, matrix_a, matrix_b, keep, algo):
+def main(sc, matrix_a, matrix_b, keep, algo, n_chunk=None):
     print(f'les arguments suivants ont été passés : matrix_a = {matrix_a}, matrix_b={matrix_b}')
     #vérifications des dimensions de la matrice
     A, B = check_validity(matrix_a, matrix_b)
     #Multiplication des matrices
     startTime = time.time()
-    mul = multiply_matrix(sc, A, B, algo)
+    mul = multiply_matrix(sc, A, B, algo, n_chunk)
     endTime = time.time()
     print('Temps total d\'exécution du calcul du produit des matrices A et B : ', str(int(endTime - startTime)) + 's')
     #écriture dans un fichier de résultats
@@ -53,7 +53,7 @@ def craft_matrix(file_name, name_elements):
     return matrice
 
 
-def multiply_matrix(sc, matrix_a, matrix_b, algo):
+def multiply_matrix(sc, matrix_a, matrix_b, algo, n_chunk=None):
     #Vérification et extraction des RDD
     startTime = time.time()
     A = extract_matrix(sc, matrix_a)
@@ -68,28 +68,27 @@ def multiply_matrix(sc, matrix_a, matrix_b, algo):
     elif int(algo) == 2:
         mul = multiply_element_by_row(A, B)
     elif int(algo) == 3:
-        mul = multiply_row_block_by_col_block(A, B)
+        mul = multiply_row_block_by_col_block(A, B, n_chunk)
     else:
         print('Algorithm introuvable')
 
     return mul
 
-def multiply_row_block_by_col_block(A, B):
+def multiply_row_block_by_col_block(A, B, n_chunk):
 
-    
-    A = sc.textFile('projet/matrix_a_3_3')
-    B = sc.textFile('projet/matrix_b_3_3')
+    if n_chunk is None:
+        n_chunk = 2
 
     #Mise sous la forme (i, ( j, v)) 
     A = A.map(lambda x: x.split('\t'))  
     A = A.map(lambda x:(x[0], (x[1], x[2])))
-    A_line = A.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+2] for i in range(0, len(list(x[1])), 2)])])
+    A_line = A.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+n_chunk] for i in range(0, len(list(x[1])), n_chunk)])])
 
 
     #Mise sous la forme (j, ( i, v)) 
     B = B.map(lambda x: x.split('\t'))  
     B = B.map(lambda x:(x[1], (x[0], x[2])))
-    B_col = B.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+2] for i in range(0, len(list(x[1])), 2)])])
+    B_col = B.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+n_chunk] for i in range(0, len(list(x[1])), n_chunk)])])
 
     mul = A_line.cartesian(B_col)
     mul = mul.filter(lambda x: x[0][0][1] == x[1][0][1])
@@ -243,13 +242,14 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--matrix_b', type=str, required=True, help="name of the second matrix")
     parser.add_argument('-k', '--keep', help="keep the program running for Spark web UI", action="store_true")
     parser.add_argument('-al', '--algo', required=True, type=int, help="Algorithm choice")
+    parser.add_argument('-n', '--n_chunk', type=int, help="Length of block algorithm")
     args = parser.parse_args()
 
     # Création du spark context - lancement de l'interface spark UI
     sc = SparkContext()
 
     #exécution du main
-    main(sc, args.matrix_a, args.matrix_b, args.keep, args.algo)
+    main(sc, args.matrix_a, args.matrix_b, args.keep, args.algo, args.n_chunk)
     
     # Arrêt du spark context 
     sc.stop()
