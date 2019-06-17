@@ -5,7 +5,7 @@ import sys
 
 
 #Changer le chemin avant l'éxécution
-PATH = 'root/bigdata/spark-2.4.3-bin-hadoop2.7/bin/projet/'
+PATH = 'root/bigdata/'
 #PATH = 'home/jsa/bigdata/spark-2.4.1-bin-hadoop2.7/bin/projet/'
 
 def main(sc, matrix_a, matrix_b, result):
@@ -30,7 +30,7 @@ def extract_matrix(sc, matrix_name):
 
 
 
-def display_matrix(matrix, matrix_name):
+"""def display_matrix(matrix, matrix_name):
 	row = 1
 	string = "\n"+ matrix_name + " :\n"
 	matrix_lines = matrix.collect()
@@ -45,6 +45,30 @@ def display_matrix(matrix, matrix_name):
 		else:
 			string += '{}\t'.format(line[2])
 			#print('{}\t'.format(row[2]))
+	print(string)
+	"""
+def display_matrix(matrix, matrix_name):
+	name_split = matrix_name.split('_')
+	if name_split[2] == 'X':
+		max_row = int(name_split[4])
+		max_col = int(name_split[5])
+	else:
+		max_row = int(name_split[3])
+		max_col = int(name_split[4])
+	
+	string = "\n"+ matrix_name + " :\n\n"
+	
+	matrix_lines = matrix.collect()
+	list = [[0] * max_col for _ in range(max_row)]
+	for line in matrix_lines:
+		line = line.split('\t')
+		row  = int(line[0])-1
+		col = int(line[1])-1
+		val = int(line[2])
+		list[row][col] = val
+	
+	for i in list:
+		string += str(i) + '\n'
 	print(string)
 		
 		
