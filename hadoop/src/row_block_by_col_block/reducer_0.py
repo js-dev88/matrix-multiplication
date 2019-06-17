@@ -4,16 +4,18 @@ chunk_length = 2
 
 def keep_matching_index(elem_L, elem_R):
     R_index = [x[1] for x in elem_R]
+    tmp_elem_L = elem_L.copy()
     for el in elem_L:
-        if el[1] not in R_index:
-            elem_L.remove(el)
+        if el[1] not in R_index: 
+            tmp_elem_L.remove(el) 
 
     L_index = [x[1] for x in elem_L]
+    tmp_elem_R = elem_R.copy()
     for el in elem_R:
         if el[1] not in L_index:
-            elem_R.remove(el)
+            tmp_elem_R.remove(el)
     
-    return elem_L, elem_R
+    return tmp_elem_L, tmp_elem_R, elem_L, elem_R
 
 def divide_in_chunks(chunk_length, elem_L, elem_R):
     if len(elem_L) > 0 and len(elem_R) > 0:
@@ -26,8 +28,8 @@ def join(super_L, elements_R):
     for elem_L in super_L:
         for elem_R in super_R:
             if len(elem_L) > 0 and len(elem_R) > 0:
-                elem_L, elem_R = keep_matching_index(elem_L, elem_R)
-                divide_in_chunks(chunk_length, elem_L, elem_R)
+                tmp_elem_L, tmp_elem_R, elem_L, elem_R = keep_matching_index(elem_L, elem_R)
+                divide_in_chunks(chunk_length, tmp_elem_L, tmp_elem_R)
                 
  
 #on fabrique les lignes et colonnes
@@ -57,7 +59,6 @@ for line in sys.stdin:
 
     if current_index != index:
         if not first_line:
-            toto = 1
             #join(super_L, elements_R)
             super_L.append(elements_L)
             super_R.append(elements_R)
