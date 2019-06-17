@@ -44,7 +44,6 @@ def check_validity(matrix_a, matrix_b):
     #Le nombre de colonnes de A doit être égale au nombre de lignes de B
     if name_elements_a[4] != name_elements_b[3]:
         ERROR_log.error("Multiplication impossible en raison des dimensions")
-        print("Multiplication impossible en raison des dimensions")
         sys.exit()
     else:
         ERROR_log.error("Test de l'ERROR LOGGER, l. 46 environ")
@@ -56,7 +55,7 @@ def check_validity(matrix_a, matrix_b):
 
 def craft_matrix(file_name, name_elements):
     #récupère les caractéritistiques d'une matrice et renvoie un dict avec les différents éléments
-    matrice = {'file_name' : file_name, 'name' : name_elements[2], 'nb_lines' : name_elements[3], 'nb_columns' : name_elements[4]}
+    matrice = {'file_name' : file_name, 'type': name_elements[0], 'name' : name_elements[2], 'nb_lines' : name_elements[3], 'nb_columns' : name_elements[4]}
     DEBUG_log.debug("TEST DU DEBUG")
     DEBUG_log.debug(matrice)
     return matrice
@@ -77,40 +76,38 @@ def multiply_matrix(sc, matrix_a, matrix_b, algo, n_chunk=None):
     elif int(algo) == 2:
         mul = multiply_element_by_row(A, B)
     elif int(algo) == 3:
-        mul = multiply_row_block_by_col_block(A, B, n_chunk)
+        mul = multiply_row_block_by_col_block(A, B, n_chunk, int(matrix_a['nb_lines']), int(matrix_a['nb_columns']),  int(matrix_b['nb_lines']), int(matrix_b['nb_columns']))
     else:
         print('Algorithm introuvable')
 
     return mul
 
-def multiply_row_block_by_col_block(A, B, n_chunk):
+def multiply_row_block_by_col_block(A, B, n_chunk, nb_lineA, nb_colA, nb_lineB, nb_colB):
 
     if n_chunk is None:
         n_chunk = 2
 
-    #Mise sous la forme (i, ( j, v)) 
-    A = A.map(lambda x: x.split('\t'))  
-    A = A.map(lambda x:(x[0], (x[1], x[2])))
-    A_line = A.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+n_chunk] for i in range(0, len(list(x[1])), n_chunk)])])
+    A = A.map(lambda x: x.split('\t')) 
+    A = A.map(lambda x:((int(x[0]),int(x[1])), int(x[2])))
+    A_t = sc.parallelize(((x,y),0) for x in range(1,nb_lineA) for y in range(1,nb_colA))
+    A_zero = A.union(A_t).reduceByKey(lambda x,y: x+y).sortByKey().map(lambda x:(x[0][0], (x[0][1], x[1])))
+    A_line = A_zero.groupByKey().flatMap(lambda x : [((x[0], i), y) for i, y in enumerate([list(x[1])[i:i+2] for i in range(0, len(list(x[1])), 2)])])
 
 
-    #Mise sous la forme (j, ( i, v)) 
+    B = sc.textFile('projet/R_matrix_TEST1b_3_4')
     B = B.map(lambda x: x.split('\t'))  
-    B = B.map(lambda x:(x[1], (x[0], x[2])))
-    B_col = B.groupByKey().flatMap(lambda x : [((int(x[0]), i), y) for i, y in enumerate([list(x[1])[i:i+n_chunk] for i in range(0, len(list(x[1])), n_chunk)])])
+    B = B.map(lambda x:((int(x[1]), int(x[0])), int(x[2])))
+    B_t = sc.parallelize(((x,y),0) for x in range(1,nb_colB) for y in range(1,nb_lineB))
+    B_zero = B.union(B_t).reduceByKey(lambda x,y: x+y).sortByKey().map(lambda x:(x[0][0], (x[0][1], x[1])))
+    B_col = B_zero.groupByKey().flatMap(lambda x : [((x[0], i), y) for i, y in enumerate([list(x[1])[i:i+2] for i in range(0, len(list(x[1])), 2)])])
 
     mul = A_line.cartesian(B_col)
     mul = mul.filter(lambda x: x[0][0][1] == x[1][0][1])
-    mul = mul.map(lambda x: ((x[0][0][0], x[1][0][0]), [int(y[1]) * int(z[1]) for y in x[0][1] for z in x[1][1] if y[0] == z[0]]))
-
-
-    #Sum des produits de la liste
-
+    mul = mul.map(lambda x: ((x[0][0][0], x[1][0][0]), [int(y[1]) * int(z[1]) for y in x[0][1] for z in x[1][1] if y[0] == z[0] ]))
     mul = mul.reduceByKey(lambda x,y: x+y)
-
     mul = mul.map(lambda x: (x[0], sum(x[1])))
-    #Tri des valeurs
-    mul = mul.sortByKey()
+    mul = mul.filter(lambda x : x[1] !=0).sortByKey()
+    mul.take(10)
 
     return mul
 
